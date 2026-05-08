@@ -23,7 +23,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 COPY prisma ./prisma/
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm install prisma @prisma/client
 RUN npx prisma generate
 
 COPY --from=builder /app/dist ./dist
