@@ -1,0 +1,123 @@
+{
+  "common": {
+    "confirm": "אישור",
+    "cancel": "ביטול",
+    "save": "שמירה",
+    "back": "חזרה",
+    "next": "הבא",
+    "loading": "טוען...",
+    "error": "שגיאה",
+    "retry": "נסי שוב",
+    "close": "סגירה",
+    "search": "חיפוש",
+    "filter": "סינון",
+    "mapView": "מפה",
+    "listView": "רשימה",
+    "rating": "דירוג",
+    "reviews": "ביקורות",
+    "price": "מחיר",
+    "duration": "משך",
+    "minutes": "דקות",
+    "hours": "שעות",
+    "available": "פנוי",
+    "booked": "תפוס",
+    "noResults": "לא נמצאו תוצאות"
+  },
+  "auth": {
+    "title": "ברוכה הבאה לדורה",
+    "subtitle": "הזמני תורים לטיפוח בקלות",
+    "phoneLabel": "מספר טלפון",
+    "phonePlaceholder": "050-0000000",
+    "sendOtp": "שלחי קוד אימות",
+    "otpTitle": "הכניסי את הקוד",
+    "otpSubtitle": "שלחנו קוד SMS למספר {{phone}}",
+    "otpPlaceholder": "000000",
+    "verifyOtp": "אימות",
+    "resendOtp": "שלחי שוב",
+    "name": "שם מלא",
+    "namePlaceholder": "שם ושם משפחה"
+  },
+  "home": {
+    "title": "היי {{name}} 👋",
+    "searchPlaceholder": "חפשי סלון, מעצבת...",
+    "categories": "קטגוריות",
+    "nearYou": "קרוב אלייך",
+    "topRated": "מומלצים"
+  },
+  "categories": {
+    "hair": "שיער",
+    "nails": "ציפורניים",
+    "manicure": "מניקור / פדיקור",
+    "laser": "לייזר",
+    "waxing": "שעווה",
+    "eyebrows": "גבות",
+    "lashes": "ריסים",
+    "facial": "טיפול פנים",
+    "massage": "עיסוי",
+    "makeup": "איפור"
+  },
+  "business": {
+    "services": "שירותים",
+    "stylists": "מעצבות",
+    "gallery": "גלריה",
+    "about": "אודות",
+    "nextAvailable": "התור הקרוב",
+    "bookNow": "הזמיני עכשיו",
+    "noAvailability": "אין זמינות קרובה"
+  },
+  "booking": {
+    "selectService": "בחרי שירות",
+    "selectStylist": "בחרי מעצבת",
+    "selectDate": "בחרי תאריך",
+    "selectTime": "בחרי שעה",
+    "confirm": "אישור הזמנה",
+    "summary": "סיכום הזמנה",
+    "total": "סה\"כ לתשלום",
+    "pay": "לתשלום",
+    "success": "ההזמנה אושרה!",
+    "successSubtitle": "נשלח אישור ל-{{phone}}",
+    "addToCalendar": "הוסיפי ליומן",
+    "waitlist": "הצטרפי לרשימת המתנה",
+    "waitlistSuccess": "נוספת לרשימת ההמתנה"
+  },
+  "appointments": {
+    "title": "התורים שלי",
+    "upcoming": "קרובים",
+    "past": "עבר",
+    "empty": "אין לך תורים קרובים",
+    "rebook": "הזמיני שוב",
+    "cancel": "בטלי תור",
+    "cancelConfirm": "האם לבטל את התור?",
+    "cancelPolicy": "ביטול עד 24 שעות לפני — החזר כספי מלא",
+    "noRefund": "ביטול לאחר 24 שעות — ללא החזר"
+  },
+  "payment": {
+    "title": "פרטי תשלום",
+    "cardNumber": "מספר כרטיס",
+    "expiry": "תוקף",
+    "cvv": "CVV",
+    "cardholderName": "שם בעל הכרטיס",
+    "saveCard": "שמרי כרטיס לתשלומים עתידיים",
+    "pay": "שלמי {{amount}} ₪",
+    "success": "התשלום בוצע בהצלחה",
+    "failed": "התשלום נכשל, נסי שוב",
+    "savedCards": "כרטיסים שמורים"
+  },
+  "profile": {
+    "title": "הפרופיל שלי",
+    "editProfile": "עריכת פרופיל",
+    "favorites": "מועדפים",
+    "notifications": "התראות",
+    "language": "שפה",
+    "logout": "התנתקות",
+    "version": "גרסה {{version}}"
+  },
+  "errors": {
+    "network": "בעיית חיבור לאינטרנט",
+    "server": "שגיאת שרת, נסי מאוחר יותר",
+    "notFound": "לא נמצא",
+    "unauthorized": "אנא התחברי מחדש",
+    "slotTaken": "הזמן הזה כבר נלקח, בחרי זמן אחר",
+    "paymentDeclined": "הכרטיס נדחה, בדקי את הפרטים"
+  }
+}

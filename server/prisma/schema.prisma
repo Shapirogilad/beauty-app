@@ -1,0 +1,442 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CLIENT
+  BUSINESS
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  CANCELLED_NO_REFUND
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum DiscountType {
+  PERCENTAGE   // e.g. 10 = 10%
+  FIXED        // e.g. 5000 = 50 ₪ in agorot
+}
+
+enum BusinessStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LoyaltyTxType {
+  EARN
+  REDEEM
+  MANUAL_GRANT
+  EXPIRE
+}
+
+enum Sex {
+  FEMALE
+  MALE
+  OTHER
+}
+
+enum ChangeRequestType {
+  CANCEL_REFUND
+  RESCHEDULE
+}
+
+enum ChangeRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  phone        String   @unique
+  name         String
+  email        String?  @unique
+  dateOfBirth  DateTime?
+  sex          Sex?
+  city         String?
+  photo        String?
+  role         UserRole @default(CLIENT)
+  deviceToken   String?
+  walletBalance Int      @default(0)   // in agorot
+  referralCode  String   @unique @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  business              Business?
+  bookings              Booking[]
+  reviews               Review[]
+  savedCards            SavedCard[]
+  waitlist              WaitlistEntry[]
+  loyaltyAccounts       LoyaltyAccount[]
+  referralsMade         Referral[]        @relation("referrer")
+  referredBy            Referral?         @relation("referred")
+  clientConversations   Conversation[]    @relation("clientConversations")
+  sentMessages          Message[]
+  complaints            Complaint[]
+  changeRequests        BookingChangeRequest[]
+}
+
+model Business {
+  id          String   @id @default(cuid())
+  ownerId     String   @unique
+  name        String
+  description String?
+  address     String
+  lat         Float
+  lng         Float
+  photos      String[]
+  workPhotos  String[]
+  category    String[]
+  phone       String
+  isActive             Boolean        @default(true)
+  status               BusinessStatus @default(PENDING)
+  // Loyalty config
+  pointsPerHundredAgorot Int @default(10)  // points earned per 100 agorot spent
+  pointsRedemptionRate   Int @default(100) // points needed for 10 agorot discount
+  loyaltyEnabled         Boolean @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner          User             @relation(fields: [ownerId], references: [id])
+  stylists       Stylist[]
+  services       Service[]
+  promos         Promo[]
+  loyaltyAccounts LoyaltyAccount[]
+  conversations  Conversation[]
+  dateExceptions BusinessDateException[]
+  complaints     Complaint[]
+
+  @@index([lat, lng])
+  @@index([isActive])
+}
+
+model Stylist {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  photo       String?
+  bio         String?
+  specialties String[]
+  instagram   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business        Business         @relation(fields: [businessId], references: [id])
+  workingHours    WorkingHours[]
+  services        Service[]
+  bookings        Booking[]
+  offeredServices StylistService[]
+
+  @@index([businessId])
+}
+
+model StylistService {
+  stylistId String
+  serviceId String
+
+  stylist Stylist @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([stylistId, serviceId])
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  businessId      String
+  stylistId       String?
+  nameHe          String
+  price                Int
+  durationMinutes      Int
+  slotIntervalMinutes  Int     @default(30)
+  isActive             Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  business         Business         @relation(fields: [businessId], references: [id])
+  stylist          Stylist?         @relation(fields: [stylistId], references: [id])
+  bookings         Booking[]
+  waitlist         WaitlistEntry[]
+  offeredByStylists StylistService[]
+
+  @@index([businessId])
+  @@index([stylistId])
+}
+
+model WorkingHours {
+  id         String  @id @default(cuid())
+  stylistId  String
+  dayOfWeek  Int
+  openTime   String
+  closeTime  String
+  isClosed   Boolean @default(false)
+  breaks     Json    @default("[]")  // [{start:"13:00",end:"14:00"}, ...]
+
+  stylist Stylist @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+
+  @@unique([stylistId, dayOfWeek])
+  @@index([stylistId])
+}
+
+model BusinessDateException {
+  id         String   @id @default(cuid())
+  businessId String
+  date       String   // "YYYY-MM-DD"
+  openTime   String?
+  closeTime  String?
+  isClosed   Boolean  @default(false)
+  breaks     Json     @default("[]")  // [{start:"13:00",end:"14:00"}, ...]
+  note       String?
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, date])
+  @@index([businessId])
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  clientId        String
+  stylistId       String
+  serviceId       String
+  startAt         DateTime
+  endAt           DateTime
+  status          BookingStatus @default(PENDING)
+  notes           String?
+  promoId         String?
+  discountAgorot  Int           @default(0)
+  loyaltyAgorot   Int           @default(0)  // discount from loyalty redemption
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  client  User     @relation(fields: [clientId], references: [id])
+  stylist Stylist  @relation(fields: [stylistId], references: [id])
+  service Service  @relation(fields: [serviceId], references: [id])
+  promo   Promo?   @relation(fields: [promoId], references: [id])
+  payment Payment?
+  review  Review?
+  changeRequests BookingChangeRequest[]
+
+  @@index([stylistId, startAt])
+  @@index([clientId])
+  @@index([status])
+  @@index([startAt])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  amountAgorot   Int           // charged to card (after wallet + discounts)
+  originalAgorot Int           // service price before discounts
+  walletAgorot   Int           @default(0)  // portion paid from wallet balance
+  status         PaymentStatus @default(PENDING)
+  providerRef    String?
+  cardLast4      String?
+  refundedAgorot Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+model SavedCard {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String
+  last4     String
+  expiry    String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookingId String   @unique
+  clientId  String
+  rating    Int
+  text      String?
+  photos    String[]
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  client  User    @relation(fields: [clientId], references: [id])
+}
+
+model WaitlistEntry {
+  id         String    @id @default(cuid())
+  clientId   String
+  serviceId  String
+  date       DateTime
+  notifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  client  User    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, date])
+  @@index([clientId])
+}
+
+// ── Promotions ────────────────────────────────────────────────────────────────
+
+model Promo {
+  id            String       @id @default(cuid())
+  businessId    String
+  code          String
+  discountType  DiscountType
+  discountValue Int          // percentage (10 = 10%) or agorot (5000 = 50 ₪)
+  maxUses       Int?         // null = unlimited
+  usedCount     Int          @default(0)
+  serviceId     String?      // null = applies to all services
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  business Business  @relation(fields: [businessId], references: [id])
+  bookings Booking[]
+
+  @@unique([businessId, code])
+  @@index([businessId])
+}
+
+// ── Loyalty ───────────────────────────────────────────────────────────────────
+
+model LoyaltyAccount {
+  id         String   @id @default(cuid())
+  clientId   String
+  businessId String
+  points     Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client       User               @relation(fields: [clientId], references: [id])
+  business     Business           @relation(fields: [businessId], references: [id])
+  transactions LoyaltyTransaction[]
+
+  @@unique([clientId, businessId])
+  @@index([clientId])
+  @@index([businessId])
+}
+
+model LoyaltyTransaction {
+  id        String        @id @default(cuid())
+  accountId String
+  type      LoyaltyTxType
+  points    Int           // positive = earn, negative = redeem/expire
+  bookingId String?
+  note      String?
+  createdAt DateTime      @default(now())
+
+  account LoyaltyAccount @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+}
+
+// ── Messaging ─────────────────────────────────────────────────────────────────
+
+model Conversation {
+  id         String   @id @default(cuid())
+  businessId String
+  clientId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business  @relation(fields: [businessId], references: [id])
+  client   User      @relation("clientConversations", fields: [clientId], references: [id])
+  messages Message[]
+
+  @@unique([businessId, clientId])
+  @@index([businessId])
+  @@index([clientId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  text           String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+// ── Referrals ─────────────────────────────────────────────────────────────────
+
+model Referral {
+  id           String    @id @default(cuid())
+  referrerId   String
+  referredId   String    @unique
+  rewardedAt   DateTime?           // when both rewards were applied
+  createdAt    DateTime  @default(now())
+
+  referrer User @relation("referrer", fields: [referrerId], references: [id])
+  referred User @relation("referred", fields: [referredId], references: [id])
+
+  @@index([referrerId])
+}
+
+// ── Change Requests ───────────────────────────────────────────────────────────
+
+model BookingChangeRequest {
+  id            String              @id @default(cuid())
+  bookingId     String
+  clientId      String
+  type          ChangeRequestType
+  status        ChangeRequestStatus @default(PENDING)
+  proposedStart DateTime?           // only for RESCHEDULE
+  note          String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  client  User    @relation(fields: [clientId], references: [id])
+
+  @@index([bookingId])
+  @@index([clientId])
+}
+
+// ── Complaints ────────────────────────────────────────────────────────────────
+
+model Complaint {
+  id          String   @id @default(cuid())
+  businessId  String
+  clientId    String
+  reason      String
+  description String?
+  status      String   @default("OPEN")   // OPEN | REVIEWED | DISMISSED
+  createdAt   DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client   User     @relation(fields: [clientId], references: [id])
+
+  @@index([businessId])
+  @@index([status])
+}
